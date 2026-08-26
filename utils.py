@@ -1,29 +1,33 @@
-import time
-import functools
-from typing import Any, Callable, Optional
+import json
+import os
+from typing import Dict, Any
 
-class NetworkRetry:
-    def __init__(self, max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
-        self.max_retries = max_retries
-        self.delay = delay
-        self.backoff = backoff
+DEFAULT_CONFIG = {
+    "clicks_per_second": 10,
+    "button": "left",
+    "hold_duration": 0.01,
+    "toggle_key": "F6"
+}
 
-    def __call__(self, func: Callable) -> Callable:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            last_error: Optional[Exception] = None
-            current_delay = self.delay
-            for attempt in range(self.max_retries):
-                try:
-                    return func(*args, **kwargs)
-                except (ConnectionError, TimeoutError, OSError) as error:
-                    last_error = error
-                    if attempt < self.max_retries - 1:
-                        time.sleep(current_delay)
-                        current_delay *= self.backoff
-            if last_error is not None:
-                raise last_error
-        return wrapper
+def load_clicker_profile(filepath: str) -> Dict[str, Any]:
+    if not os.path.exists(filepath):
+        return DEFAULT_CONFIG.copy()
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return {**DEFAULT_CONFIG, **data}
+    except (json.JSONDecodeError, IOError):
+        return DEFAULT_CONFIG.copy()
 
-def retry_network_operation(max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0) -> Callable:
-    return NetworkRetry(max_retries, delay, backoff)
+def save_clicker_profile(filepath: str, config: Dict[str, Any]) -> bool:
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=4)
+        return True
+    except IOError:
+        return False
+
+def validate_interval(cps: float) -> float:
+    if cps <= 0:
+        return 0.1
+    return 1.0 / float(cps)
