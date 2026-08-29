@@ -1,24 +1,31 @@
 import logging
 from logging.handlers import RotatingFileHandler
-import os
+from pathlib import Path
 
-def setup_logger(log_name: str = "pyautogui_tools") -> logging.Logger:
-    logger = logging.getLogger(log_name)
-    if not logger.handlers:
-        logger.setLevel(logging.INFO)
-        log_dir = "logs"
-        os.makedirs(log_dir, exist_ok=True)
-        log_file = os.path.join(log_dir, f"{log_name}.log")
-        file_handler = RotatingFileHandler(
-            log_file, maxBytes=1024 * 1024 * 5, backupCount=5
-        )
-        file_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        )
-        logger.addHandler(file_handler)
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        )
-        logger.addHandler(stream_handler)
+LOG_DIR = Path("logs")
+LOG_FILE = LOG_DIR / "autoclicker.log"
+MAX_LOG_SIZE = 5 * 1024 * 1024
+BACKUP_COUNT = 3
+
+def setup_logger(level=logging.INFO):
+    LOG_DIR.mkdir(exist_ok=True)
+    logger = logging.getLogger("autoclicker")
+    logger.setLevel(level)
+    if any(isinstance(h, RotatingFileHandler) for h in logger.handlers):
+        return logger
+    file_handler = RotatingFileHandler(
+        LOG_FILE,
+        maxBytes=MAX_LOG_SIZE,
+        backupCount=BACKUP_COUNT,
+        encoding="utf-8"
+    )
+    file_formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s"
+    )
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+    console_handler = logging.StreamHandler()
+    console_formatter = logging.Formatter("%(levelname)s: %(message)s")
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
     return logger
