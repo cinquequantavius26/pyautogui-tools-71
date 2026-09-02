@@ -1,40 +1,42 @@
+import pyautogui
 import time
-from functools import wraps
-import socket
-import urllib.request
-import urllib.error
+import random
 
-def retry_network_operation(max_retries=3, delay=1.0, backoff=2.0):
-    exceptions = (urllib.error.URLError, urllib.error.HTTPError, socket.timeout, ConnectionError, TimeoutError)
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            current_delay = delay
-            for attempt in range(max_retries):
-                try:
-                    return func(*args, **kwargs)
-                except exceptions as err:
-                    if attempt == max_retries - 1:
-                        raise
-                    time.sleep(current_delay)
-                    current_delay *= backoff
-            return None
-        return wrapper
-    return decorator
+def move_mouse(x, y, duration=0.5):
+    pyautogui.moveTo(x, y, duration=duration)
 
-def safe_network_call(func, *args, **kwargs):
-    decorated = retry_network_operation(max_retries=4, delay=0.5)(func)
-    return decorated(*args, **kwargs)
+def left_click(x=None, y=None, duration=0.5):
+    if x is not None and y is not None:
+        move_mouse(x, y, duration)
+    pyautogui.click()
 
-def validate_url(url):
-    if not url.startswith(('http://', 'https://')):
-        raise ValueError('Invalid URL')
-    return url
+def right_click(x=None, y=None, duration=0.5):
+    if x is not None and y is not None:
+        move_mouse(x, y, duration)
+    pyautogui.rightClick()
 
-def get_with_retry(url):
-    validate_url(url)
-    @retry_network_operation(max_retries=3)
-    def inner():
-        with urllib.request.urlopen(url) as resp:
-            return resp.read()
-    return inner()
+def double_click(x=None, y=None, duration=0.5):
+    if x is not None and y is not None:
+        move_mouse(x, y, duration)
+    pyautogui.doubleClick()
+
+def random_delay(min_seconds=0.1, max_seconds=0.5):
+    time.sleep(random.uniform(min_seconds, max_seconds))
+
+def get_position():
+    return pyautogui.position()
+
+def scroll(direction, amount=10):
+    if direction.lower() == 'up':
+        pyautogui.scroll(amount)
+    else:
+        pyautogui.scroll(-amount)
+
+def press_hotkey(*keys):
+    pyautogui.hotkey(*keys)
+
+def type_string(text, interval=0.02):
+    pyautogui.typewrite(text, interval=interval)
+
+def drag_to(x, y, duration=1.0):
+    pyautogui.dragTo(x, y, duration=duration)
