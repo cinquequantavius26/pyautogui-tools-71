@@ -1,40 +1,49 @@
 # pyautogui-tools-71
 
-A powerful autoclicker tool built with Python, designed to automate repetitive clicking tasks efficiently and effortlessly. With `pyautogui-tools-71`, streamline your workflow by simulating mouse clicks with customizable parameters tailored to your needs.
+A lightweight, high-performance automation utility built on PyAutoGUI designed to streamline repetitive mouse tasks. It provides a robust framework for creating custom clicker patterns with minimal overhead.
 
 ## Features
-- **Customizable Click Intervals**: Specify the time interval between clicks to suit your task requirements, whether rapid clicks or deliberate pacing.
-- **Mouse Position Control**: Click at specified screen coordinates and manage multiple click positions for complex automation tasks.
-- **Hotkey Integration**: Assign start and stop functionality to customizable hotkeys, allowing you to control the autoclicker seamlessly during use.
-- **Click Type Options**: Choose between left-click, right-click, and double-click options, giving you full control over the type of mouse interactions.
+
+*   **Precision Targeting:** Use screen-coordinate mapping or image recognition to trigger clicks at exact UI elements.
+*   **Customizable Intervals:** Define specific delay patterns between clicks to bypass basic rate-limiting or anti-bot detection.
+*   **Multi-Monitor Support:** Seamlessly coordinate movements across extended displays with coordinate normalization.
+*   **Safety Interlocks:** Includes a failsafe mechanism that aborts all scripts if the mouse is moved to a corner of the screen.
 
 ## Installation
 
-To set up `pyautogui-tools-71`, ensure you have Python installed, preferably version 3.6 or higher. To install the package and its dependencies, run the following command:
+Ensure you have Python 3.8+ installed. Install the package directly via pip:
 
 ```bash
 pip install pyautogui
-```
-
-Clone the repository and navigate into the project directory:
-
-```bash
 git clone https://github.com/Developer/pyautogui-tools-71.git
 cd pyautogui-tools-71
 ```
 
-## Basic Usage Example
+*Note: If you are on Linux, ensure `python3-tk` and `python3-dev` are installed to support cross-platform display features.*
 
-To start using the autoclicker, simply execute the `autoclicker.py` file provided in the repository. Here’s an example command to initiate the autoclicker that clicks every second at the mouse's current position:
+## Usage
 
-```bash
-python autoclicker.py --interval 1
+Create a simple script to automate a clicking sequence. The following example demonstrates a rapid-click loop with a configurable delay:
+
+```python
+import pyautogui
+from pyautogui_tools_71 import Clicker
+
+# Initialize with a 0.5-second interval between clicks
+bot = Clicker(interval=0.5)
+
+# Execute 10 clicks at current coordinates
+bot.start_sequence(clicks=10)
+
+# Execute clicks at a specific target location
+bot.click_at(x=500, y=500)
 ```
-
-Press the assigned hotkey (default: `Ctrl + Shift + A`) to start and stop the clicking process.
 
 ## License
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-For further information and advanced usage, please refer to the documentation and source code within this repository. Enjoy streamlined automation with `pyautogui-tools-71`!
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Disclaimer
+This tool is intended for personal automation and testing purposes only. Use responsibly and ensure compliance with the Terms of Service of any target applications.
