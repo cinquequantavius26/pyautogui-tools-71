@@ -1,36 +1,29 @@
 import json
 import os
-
+from typing import Any, Dict
 
 DEFAULT_CONFIG = {
-    "clicks_per_second": 10.0,
+    "interval": 0.1,
     "button": "left",
-    "hotkey": "f6",
-    "hold_delay": 0.05,
-    "randomize_delay": False,
-    "delay_variance": 0.01,
+    "clicks": 1,
+    "failsafe": True
 }
 
-
-def load_config(filepath=None):
-    config = DEFAULT_CONFIG.copy()
+def load_config(filepath: str = "config.json") -> Dict[str, Any]:
+    if not os.path.exists(filepath):
+        _save_default(filepath)
+        return DEFAULT_CONFIG
     
-    if filepath and os.path.exists(filepath):
-        try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                user_config = json.load(f)
-                if isinstance(user_config, dict):
-                    config.update({k: v for k, v in user_config.items() if k in DEFAULT_CONFIG})
-        except (json.JSONDecodeError, IOError):
-            pass
-            
-    return config
+    try:
+        with open(filepath, "r") as f:
+            data = json.load(f)
+            return {**DEFAULT_CONFIG, **data}
+    except (json.JSONDecodeError, IOError):
+        return DEFAULT_CONFIG
 
-
-def save_config(config, filepath):
-    final_config = DEFAULT_CONFIG.copy()
-    if isinstance(config, dict):
-        final_config.update({k: v for k, v in config.items() if k in DEFAULT_CONFIG})
-        
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(final_config, f, indent=4)
+def _save_default(filepath: str) -> None:
+    try:
+        with open(filepath, "w") as f:
+            json.dump(DEFAULT_CONFIG, f, indent=4)
+    except IOError:
+        pass
