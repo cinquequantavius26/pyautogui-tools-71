@@ -9,21 +9,21 @@ DEFAULT_CONFIG = {
     "failsafe": True
 }
 
-def load_config(filepath: str = "config.json") -> Dict[str, Any]:
-    if not os.path.exists(filepath):
-        _save_default(filepath)
-        return DEFAULT_CONFIG
-    
-    try:
-        with open(filepath, "r") as f:
-            data = json.load(f)
-            return {**DEFAULT_CONFIG, **data}
-    except (json.JSONDecodeError, IOError):
-        return DEFAULT_CONFIG
+class ConfigLoader:
+    def __init__(self, filepath: str = "config.json"):
+        self.filepath = filepath
 
-def _save_default(filepath: str) -> None:
-    try:
-        with open(filepath, "w") as f:
-            json.dump(DEFAULT_CONFIG, f, indent=4)
-    except IOError:
-        pass
+    def load(self) -> Dict[str, Any]:
+        if not os.path.exists(self.filepath):
+            return DEFAULT_CONFIG
+        
+        try:
+            with open(self.filepath, "r") as f:
+                user_config = json.load(f)
+                return {**DEFAULT_CONFIG, **user_config}
+        except (json.JSONDecodeError, IOError):
+            return DEFAULT_CONFIG
+
+    def save(self, config: Dict[str, Any]) -> None:
+        with open(self.filepath, "w") as f:
+            json.dump(config, f, indent=4)
