@@ -1,28 +1,30 @@
-import logging
-from logging.handlers import RotatingFileHandler
-from pathlib import Path
+import pyautogui
+import time
+from typing import Tuple
 
-def setup_logging():
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
-    log_file = log_dir / "pyautogui_tools.log"
-    logger = logging.getLogger("pyautogui_tools")
-    logger.setLevel(logging.DEBUG)
-    if logger.handlers:
-        return logger
-    rotating_handler = RotatingFileHandler(
-        log_file,
-        maxBytes=10485760,
-        backupCount=5
-    )
-    rotating_handler.setLevel(logging.INFO)
-    formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    )
-    rotating_handler.setFormatter(formatter)
-    logger.addHandler(rotating_handler)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.WARNING)
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
-    return logger
+def validate_coordinates(x: int, y: int) -> bool:
+    screen_width, screen_height = pyautogui.size()
+    return 0 <= x < screen_width and 0 <= y < screen_height
+
+def validate_interval(interval: float) -> bool:
+    return isinstance(interval, (int, float)) and interval >= 0
+
+def run_click_loop(x: int, y: int, interval: float, count: int) -> None:
+    if not validate_coordinates(x, y):
+        raise ValueError(f"Coordinates ({x}, {y}) out of screen bounds")
+    
+    if not validate_interval(interval):
+        raise ValueError(f"Invalid interval: {interval}")
+
+    if not isinstance(count, int) or count < 0:
+        raise ValueError("Count must be a non-negative integer")
+
+    for _ in range(count):
+        pyautogui.click(x, y)
+        time.sleep(interval)
+
+if __name__ == "__main__":
+    try:
+        run_click_loop(100, 100, 0.5, 10)
+    except (ValueError, pyautogui.PyAutoGUIException) as e:
+        print(f"Processing error: {e}")
