@@ -1,35 +1,27 @@
-import json
-import logging
-from typing import Any, Dict
-from pathlib import Path
+import time
+from functools import wraps
+from typing import Any, Callable, Type, Tuple
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('pyautogui-tools-71')
-
-class ClickDataHandler:
-    def __init__(self, filepath: str = 'clicks.json'):
-        self.path = Path(filepath)
-
-    def save(self, data: Dict[str, Any]) -> bool:
-        try:
-            with open(self.path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=4)
-            return True
-        except (IOError, TypeError) as e:
-            logger.error(f'failed to save data: {e}')
-            return False
-
-    def load(self) -> Dict[str, Any]:
-        if not self.path.exists():
-            return {}
-        try:
-            with open(self.path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            logger.error(f'failed to load data: {e}')
-            return {}
-
-    def update_position(self, x: int, y: int, interval: float) -> bool:
-        data = self.load()
-        data.update({'last_x': x, 'last_y': y, 'interval': interval})
-        return self.save(data)
+def with_retry(
+    retries: int = 3,
+    delay: float = 1.0,
+    exceptions: Tuple[Type[Exception], ...] = (ConnectionError, TimeoutError)
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            last_exception = None
+            current_delay = delay
+            for attempt in range(retries):
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    last_exception = e
+                    if attempt < retries - 1:
+                        time.sleep(current_delay)
+                        current_delay *= 2
+            if last_exception:
+                raise last_exception
+            raise RuntimeError("Operation failed after maximum retries")
+        return wrapper
+    return decorator
