@@ -1,24 +1,26 @@
 import time
 import functools
-import logging
+import requests
 from typing import Callable, Any
 
-logger = logging.getLogger(__name__)
-
-def retry(max_attempts: int = 3, delay: float = 1.0):
-    def decorator(func: Callable) -> Callable:
+def retry_network_op(retries: int = 3, delay: float = 1.0):
+    def decorator(func: Callable):
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> Any:
             last_exception = None
-            for attempt in range(max_attempts):
+            for attempt in range(retries):
                 try:
                     return func(*args, **kwargs)
-                except Exception as e:
+                except (requests.RequestException, ConnectionError) as e:
                     last_exception = e
-                    logger.warning(f"Attempt {attempt + 1} failed: {e}")
-                    if attempt < max_attempts - 1:
-                        time.sleep(delay)
-            logger.error(f"Operation failed after {max_attempts} attempts")
+                    if attempt < retries - 1:
+                        time.sleep(delay * (2 ** attempt))
             raise last_exception
         return wrapper
     return decorator
+
+@retry_network_op(retries=3, delay=2.0)
+def fetch_remote_config(url: str) -> dict:
+    response = requests.get(url, timeout=5)
+    response.raise_for_status()
+    return response.json()
