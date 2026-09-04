@@ -1,30 +1,35 @@
-import pyautogui
-import time
-from typing import Tuple
+import json
+import logging
+from typing import Any, Dict
+from pathlib import Path
 
-def validate_coordinates(x: int, y: int) -> bool:
-    screen_width, screen_height = pyautogui.size()
-    return 0 <= x < screen_width and 0 <= y < screen_height
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('pyautogui-tools-71')
 
-def validate_interval(interval: float) -> bool:
-    return isinstance(interval, (int, float)) and interval >= 0
+class ClickDataHandler:
+    def __init__(self, filepath: str = 'clicks.json'):
+        self.path = Path(filepath)
 
-def run_click_loop(x: int, y: int, interval: float, count: int) -> None:
-    if not validate_coordinates(x, y):
-        raise ValueError(f"Coordinates ({x}, {y}) out of screen bounds")
-    
-    if not validate_interval(interval):
-        raise ValueError(f"Invalid interval: {interval}")
+    def save(self, data: Dict[str, Any]) -> bool:
+        try:
+            with open(self.path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=4)
+            return True
+        except (IOError, TypeError) as e:
+            logger.error(f'failed to save data: {e}')
+            return False
 
-    if not isinstance(count, int) or count < 0:
-        raise ValueError("Count must be a non-negative integer")
+    def load(self) -> Dict[str, Any]:
+        if not self.path.exists():
+            return {}
+        try:
+            with open(self.path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logger.error(f'failed to load data: {e}')
+            return {}
 
-    for _ in range(count):
-        pyautogui.click(x, y)
-        time.sleep(interval)
-
-if __name__ == "__main__":
-    try:
-        run_click_loop(100, 100, 0.5, 10)
-    except (ValueError, pyautogui.PyAutoGUIException) as e:
-        print(f"Processing error: {e}")
+    def update_position(self, x: int, y: int, interval: float) -> bool:
+        data = self.load()
+        data.update({'last_x': x, 'last_y': y, 'interval': interval})
+        return self.save(data)
