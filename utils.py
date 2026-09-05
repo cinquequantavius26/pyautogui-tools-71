@@ -1,26 +1,19 @@
 import time
 import functools
-import requests
-from typing import Callable, Any
+from typing import Callable, Any, Type, Tuple
 
-def retry_network_op(retries: int = 3, delay: float = 1.0):
-    def decorator(func: Callable):
+def retry(exceptions: Tuple[Type[Exception], ...], tries: int = 3, delay: float = 1.0) -> Callable:
+    def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             last_exception = None
-            for attempt in range(retries):
+            for attempt in range(tries):
                 try:
                     return func(*args, **kwargs)
-                except (requests.RequestException, ConnectionError) as e:
+                except exceptions as e:
                     last_exception = e
-                    if attempt < retries - 1:
-                        time.sleep(delay * (2 ** attempt))
+                    if attempt < tries - 1:
+                        time.sleep(delay)
             raise last_exception
         return wrapper
     return decorator
-
-@retry_network_op(retries=3, delay=2.0)
-def fetch_remote_config(url: str) -> dict:
-    response = requests.get(url, timeout=5)
-    response.raise_for_status()
-    return response.json()
