@@ -1,30 +1,27 @@
 import logging
 from logging.handlers import RotatingFileHandler
-import os
+from pathlib import Path
 
-LOG_FILE = "autoclicker.log"
-MAX_BYTES = 1024 * 1024 * 5
-BACKUP_COUNT = 3
-
-def setup_logger(name: str = "pyautogui-tools-71") -> logging.Logger:
+def setup_logger(name: str, log_file: str = "app.log") -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
 
-    if not logger.handlers:
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+    path = Path(log_file)
+    path.parent.mkdir(parents=True, exist_ok=True)
 
-        file_handler = RotatingFileHandler(
-            LOG_FILE,
-            maxBytes=MAX_BYTES,
-            backupCount=BACKUP_COUNT
-        )
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
+    file_handler = RotatingFileHandler(
+        log_file, maxBytes=1_048_576, backupCount=3
+    )
+    file_handler.setFormatter(formatter)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
 
     return logger
