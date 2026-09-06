@@ -1,27 +1,23 @@
 import time
-from functools import wraps
-from typing import Any, Callable, Type, Tuple
+import pyautogui
 
-def with_retry(
-    retries: int = 3,
-    delay: float = 1.0,
-    exceptions: Tuple[Type[Exception], ...] = (ConnectionError, TimeoutError)
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            last_exception = None
-            current_delay = delay
-            for attempt in range(retries):
-                try:
-                    return func(*args, **kwargs)
-                except exceptions as e:
-                    last_exception = e
-                    if attempt < retries - 1:
-                        time.sleep(current_delay)
-                        current_delay *= 2
-            if last_exception:
-                raise last_exception
-            raise RuntimeError("Operation failed after maximum retries")
-        return wrapper
-    return decorator
+
+class MouseClickHandler:
+    def __init__(self, default_delay: float = 0.1) -> None:
+        self.default_delay = default_delay
+        pyautogui.FAILSAFE = True
+
+    def click_at(self, x: int, y: int, clicks: int = 1, interval: float = 0.0) -> None:
+        pyautogui.click(x=x, y=y, clicks=clicks, interval=interval)
+
+    def double_click_at(self, x: int, y: int) -> None:
+        pyautogui.doubleClick(x=x, y=y)
+
+    def move_and_click(self, x: int, y: int, duration: float = 0.2) -> None:
+        pyautogui.moveTo(x, y, duration=duration)
+        pyautogui.click()
+
+    def click_sequence(self, points: list[tuple[int, int]], interval: float = 0.5) -> None:
+        for x, y in points:
+            pyautogui.click(x, y)
+            time.sleep(interval)
