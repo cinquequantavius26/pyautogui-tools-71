@@ -1,42 +1,31 @@
-import pyautogui
-import time
 import random
+import time
+from typing import Tuple, Optional
 
-def move_mouse(x, y, duration=0.5):
-    pyautogui.moveTo(x, y, duration=duration)
 
-def left_click(x=None, y=None, duration=0.5):
-    if x is not None and y is not None:
-        move_mouse(x, y, duration)
-    pyautogui.click()
+def random_sleep(min_seconds: float, max_seconds: float) -> None:
+    if min_seconds < 0 or max_seconds < min_seconds:
+        raise ValueError("Invalid sleep duration parameters")
+    duration = random.uniform(min_seconds, max_seconds)
+    time.sleep(duration)
 
-def right_click(x=None, y=None, duration=0.5):
-    if x is not None and y is not None:
-        move_mouse(x, y, duration)
-    pyautogui.rightClick()
 
-def double_click(x=None, y=None, duration=0.5):
-    if x is not None and y is not None:
-        move_mouse(x, y, duration)
-    pyautogui.doubleClick()
+def calculate_interval(clicks_per_second: float) -> float:
+    if clicks_per_second <= 0:
+        raise ValueError("Clicks per second must be greater than zero")
+    return 1.0 / clicks_per_second
 
-def random_delay(min_seconds=0.1, max_seconds=0.5):
-    time.sleep(random.uniform(min_seconds, max_seconds))
 
-def get_position():
-    return pyautogui.position()
+def is_within_bounds(x: int, y: int, screen_size: Tuple[int, int]) -> bool:
+    width, height = screen_size
+    return 0 <= x < width and 0 <= y < height
 
-def scroll(direction, amount=10):
-    if direction.lower() == 'up':
-        pyautogui.scroll(amount)
-    else:
-        pyautogui.scroll(-amount)
 
-def press_hotkey(*keys):
-    pyautogui.hotkey(*keys)
-
-def type_string(text, interval=0.02):
-    pyautogui.typewrite(text, interval=interval)
-
-def drag_to(x, y, duration=1.0):
-    pyautogui.dragTo(x, y, duration=duration)
+def parse_coordinates(coord_str: str) -> Optional[Tuple[int, int]]:
+    try:
+        parts = coord_str.strip().split(",")
+        if len(parts) != 2:
+            return None
+        return int(parts[0].strip()), int(parts[1].strip())
+    except ValueError:
+        return None
