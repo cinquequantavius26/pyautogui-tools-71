@@ -1,77 +1,37 @@
-import time
-from typing import Optional, Dict, Any
-import pyautogui
+import json
+from typing import Dict, Any, Optional
 
-class AutoclickProcessor:
-    """Processes automated clicking tasks using pyautogui."""
+class ClickerDataProcessor:
+    """Handles serialization of autoclicker configuration files."""
 
-    def __init__(self, interval: float = 0.5, button: str = "left") -> None:
-        """Set up the click processor.
+    @staticmethod
+    def load_config(filepath: str) -> Dict[str, Any]:
+        try:
+            with open(filepath, 'r') as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {}
 
-        Args:
-            interval: Time between consecutive clicks.
-            button: The mouse button to click with.
-        """
-        self.interval: float = max(0.01, interval)
-        self.button: str = button
-        self.running: bool = False
+    @staticmethod
+    def save_config(filepath: str, data: Dict[str, Any]) -> bool:
+        try:
+            with open(filepath, 'w') as f:
+                json.dump(data, f, indent=4)
+            return True
+        except IOError:
+            return False
 
-    def start(self, duration: Optional[float] = None) -> int:
-        """Begin automated clicking.
+    @staticmethod
+    def validate_params(data: Dict[str, Any]) -> bool:
+        required_keys = {'interval', 'button', 'repeats'}
+        return all(key in data for key in required_keys)
 
-        Args:
-            duration: Maximum time to run in seconds.
-        Returns:
-            Count of clicks completed.
-        """
-        self.running = True
-        clicks: int = 0
-        start_time: float = time.time()
-        while self.running:
-            pyautogui.click(button=self.button)
-            clicks += 1
-            if duration is not None and time.time() - start_time >= duration:
-                self.running = False
-                break
-            time.sleep(self.interval)
-        return clicks
+    def process_sequence(self, sequence: list) -> list:
+        return [self._sanitize_step(step) for step in sequence]
 
-    def stop(self) -> None:
-        """Halt the clicking operation."""
-        self.running = False
-
-    def update_settings(self, interval: Optional[float] = None, button: Optional[str] = None) -> None:
-        """Modify processor configuration.
-
-        Args:
-            interval: New click interval if provided.
-            button: New button if provided.
-        """
-        if interval is not None and interval > 0:
-            self.interval = interval
-        if button is not None:
-            self.button = button
-
-    def get_info(self) -> Dict[str, Any]:
-        """Provide current configuration details.
-
-        Returns:
-            Status information as dictionary.
-        """
+    def _sanitize_step(self, step: Dict[str, Any]) -> Dict[str, Any]:
         return {
-            "running": self.running,
-            "interval": self.interval,
-            "button": self.button
+            'x': int(step.get('x', 0)),
+            'y': int(step.get('y', 0)),
+            'delay': float(step.get('delay', 0.1))
         }
-
-
-def create_processor(interval: float = 0.5, button: str = "left") -> AutoclickProcessor:
-    """Factory function to instantiate processor.
-
-    Args:
-        interval: Click delay.
-        button: Click button.
-    Returns:
-        New AutoclickProcessor instance.
-    """
-    return AutoclickProcessor(interval=interval, button=button)
