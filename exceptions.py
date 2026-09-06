@@ -1,47 +1,19 @@
-import time
-from functools import wraps
+class AutoClickerError(Exception):
+    """Base exception for the toolkit."""
 
-class NetworkError(Exception):
-    pass
+class CoordinateOutOfBoundsError(AutoClickerError):
+    """Raised when coordinates fall outside screen resolution."""
 
-class ConnectionError(NetworkError):
-    pass
+class ConfigurationError(AutoClickerError):
+    """Raised when input parameters are invalid."""
 
-class TimeoutError(NetworkError):
-    pass
+class ExecutionError(AutoClickerError):
+    """Raised during click sequence failures."""
 
-class MaxRetriesExceeded(NetworkError):
-    pass
+def validate_coordinates(x: int, y: int, screen_width: int, screen_height: int) -> None:
+    if not (0 <= x < screen_width and 0 <= y < screen_height):
+        raise CoordinateOutOfBoundsError(f"({x}, {y}) outside resolution {screen_width}x{screen_height}")
 
-def retry(max_retries=3, delay=1):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            last_exc = None
-            for i in range(max_retries):
-                try:
-                    return func(*args, **kwargs)
-                except (ConnectionError, TimeoutError) as exc:
-                    last_exc = exc
-                    if i < max_retries - 1:
-                        time.sleep(delay)
-            if last_exc:
-                raise MaxRetriesExceeded("Maximum retries exceeded") from last_exc
-            raise MaxRetriesExceeded("Maximum retries exceeded")
-        return wrapper
-    return decorator
-
-class RetryManager:
-    def __init__(self, max_retries=3, delay=1):
-        self.max_retries = max_retries
-        self.delay = delay
-    def run(self, operation):
-        last_exc = None
-        for attempt in range(self.max_retries):
-            try:
-                return operation()
-            except (ConnectionError, TimeoutError) as exc:
-                last_exc = exc
-                if attempt < self.max_retries - 1:
-                    time.sleep(self.delay)
-        raise MaxRetriesExceeded("Max retries exceeded") from last_exc
+def validate_interval(interval: float) -> None:
+    if interval < 0:
+        raise ConfigurationError(f"Invalid interval: {interval}. Must be non-negative.")
