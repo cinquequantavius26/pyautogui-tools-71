@@ -1,42 +1,33 @@
-import time
-import threading
 import pyautogui
+import time
+from typing import Tuple
 
-pyautogui.PAUSE = 0.001
-pyautogui.FAILSAFE = True
-
-class HighPerformanceClicker:
-    def __init__(self, interval: float = 0.001, button: str = "left"):
+class AutoClicker:
+    def __init__(self, interval: float = 0.01):
         self.interval = interval
-        self.button = button
         self._running = False
-        self._thread = None
+        pyautogui.PAUSE = 0
 
-    def _click_loop(self):
-        click_func = pyautogui.click
-        button = self.button
-        interval = self.interval
+    def start(self, duration: int = None):
+        self._running = True
+        start_time = time.perf_counter()
         
-        while self._running:
-            start_time = time.perf_counter()
-            click_func(button=button)
-            elapsed = time.perf_counter() - start_time
-            sleep_time = interval - elapsed
-            if sleep_time > 0:
-                time.sleep(sleep_time)
-
-    def start(self):
-        if not self._running:
-            self._running = True
-            self._thread = threading.Thread(target=self._click_loop, daemon=True)
-            self._thread.start()
+        try:
+            while self._running:
+                pyautogui.click(_pause=False)
+                time.sleep(self.interval)
+                
+                if duration and (time.perf_counter() - start_time) > duration:
+                    break
+        except KeyboardInterrupt:
+            self.stop()
 
     def stop(self):
         self._running = False
-        if self._thread:
-            self._thread.join(timeout=1.0)
-            self._thread = None
 
-    @property
-    def is_running(self) -> bool:
-        return self._running
+    def set_position(self, x: int, y: int):
+        pyautogui.moveTo(x, y, _pause=False)
+
+    @staticmethod
+    def get_position() -> Tuple[int, int]:
+        return pyautogui.position()
