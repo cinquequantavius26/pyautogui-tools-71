@@ -1,25 +1,22 @@
-import re
+from typing import Any, Union
 
+def validate_coordinates(x: Any, y: Any) -> tuple[int, int]:
+    if not (isinstance(x, (int, float)) and isinstance(y, (int, float))):
+        raise ValueError(f"Coordinates must be numeric, got {type(x)}, {type(y)}")
+    return int(x), int(y)
 
-def validate_coordinate(value: int) -> int:
-    if not isinstance(value, int) or value < 0:
-        raise ValueError(f"Invalid coordinate: {value}. Must be non-negative integer.")
-    return value
+def validate_interval(interval: Any) -> float:
+    if not isinstance(interval, (int, float)) or interval < 0:
+        raise ValueError(f"Interval must be non-negative number, got {interval}")
+    return float(interval)
 
+def validate_clicks(clicks: Any) -> int:
+    if not isinstance(clicks, int) or clicks < 1:
+        raise ValueError(f"Click count must be positive integer, got {clicks}")
+    return clicks
 
-def validate_interval(value: float) -> float:
-    if not isinstance(value, (int, float)) or value <= 0:
-        raise ValueError(f"Invalid interval: {value}. Must be positive number.")
-    return float(value)
-
-
-def validate_hotkey(key: str) -> str:
-    if not re.match(r'^[a-zA-Z0-9+]+$', key):
-        raise ValueError(f"Invalid hotkey format: {key}.")
-    return key
-
-
-def validate_clicks(count: int) -> int:
-    if not isinstance(count, int) or count < -1:
-        raise ValueError(f"Invalid click count: {count}. Must be -1 or positive.")
-    return count
+def validate_button(button: str) -> str:
+    valid = ('left', 'right', 'middle')
+    if button not in valid:
+        raise ValueError(f"Button must be one of {valid}, got {button}")
+    return button
