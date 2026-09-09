@@ -1,23 +1,38 @@
-import time
 import pyautogui
+import logging
+from typing import Tuple, Optional
 
+logger = logging.getLogger(__name__)
 
-class MouseClickHandler:
-    def __init__(self, default_delay: float = 0.1) -> None:
-        self.default_delay = default_delay
-        pyautogui.FAILSAFE = True
+def safe_click(x: int, y: int) -> bool:
+    try:
+        screen_width, screen_height = pyautogui.size()
+        if not (0 <= x < screen_width and 0 <= y < screen_height):
+            logger.error(f"Coordinates ({x}, {y}) out of bounds")
+            return False
+        
+        pyautogui.click(x, y)
+        return True
+    except pyautogui.FailSafeException:
+        logger.critical("Fail-safe triggered by user")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected automation failure: {e}")
+        return False
 
-    def click_at(self, x: int, y: int, clicks: int = 1, interval: float = 0.0) -> None:
-        pyautogui.click(x=x, y=y, clicks=clicks, interval=interval)
+def get_valid_position(x: str, y: str) -> Optional[Tuple[int, int]]:
+    try:
+        pos_x, pos_y = int(x), int(y)
+        return (pos_x, pos_y)
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Invalid coordinate input: {e}")
+        return None
 
-    def double_click_at(self, x: int, y: int) -> None:
-        pyautogui.doubleClick(x=x, y=y)
-
-    def move_and_click(self, x: int, y: int, duration: float = 0.2) -> None:
-        pyautogui.moveTo(x, y, duration=duration)
-        pyautogui.click()
-
-    def click_sequence(self, points: list[tuple[int, int]], interval: float = 0.5) -> None:
-        for x, y in points:
-            pyautogui.click(x, y)
-            time.sleep(interval)
+def perform_click_sequence(coords: list) -> int:
+    successful_clicks = 0
+    for x, y in coords:
+        if safe_click(x, y):
+            successful_clicks += 1
+        else:
+            break
+    return successful_clicks
