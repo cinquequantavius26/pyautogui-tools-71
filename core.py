@@ -1,33 +1,35 @@
-import pyautogui
 import time
-from typing import Tuple
+import threading
+import pyautogui
 
-class AutoClicker:
-    def __init__(self, interval: float = 0.01):
+pyautogui.PAUSE = 0.0001
+pyautogui.FAILSAFE = True
+
+class RapidClicker:
+    def __init__(self, interval=0.001, button='left'):
         self.interval = interval
-        self._running = False
-        pyautogui.PAUSE = 0
+        self.button = button
+        self.is_running = False
+        self._thread = None
 
-    def start(self, duration: int = None):
-        self._running = True
-        start_time = time.perf_counter()
+    def _click_loop(self):
+        click_func = pyautogui.click
+        sleep_func = time.sleep
+        interval = self.interval
+        button = self.button
         
-        try:
-            while self._running:
-                pyautogui.click(_pause=False)
-                time.sleep(self.interval)
-                
-                if duration and (time.perf_counter() - start_time) > duration:
-                    break
-        except KeyboardInterrupt:
-            self.stop()
+        while self.is_running:
+            click_func(button=button)
+            if interval > 0:
+                sleep_func(interval)
+
+    def start(self):
+        if not self.is_running:
+            self.is_running = True
+            self._thread = threading.Thread(target=self._click_loop, daemon=True)
+            self._thread.start()
 
     def stop(self):
-        self._running = False
-
-    def set_position(self, x: int, y: int):
-        pyautogui.moveTo(x, y, _pause=False)
-
-    @staticmethod
-    def get_position() -> Tuple[int, int]:
-        return pyautogui.position()
+        self.is_running = False
+        if self._thread:
+            self._thread.join(timeout=0.5)
