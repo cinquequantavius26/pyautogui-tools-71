@@ -5,22 +5,25 @@ from typing import Dict, Any
 DEFAULT_CONFIG = {
     "interval": 0.1,
     "button": "left",
-    "clicks": 1,
+    "failsafe": True,
     "hotkey": "f6"
 }
 
-def load_config(filepath: str) -> Dict[str, Any]:
-    config = DEFAULT_CONFIG.copy()
-    if not os.path.exists(filepath):
-        return config
-    try:
-        with open(filepath, "r") as f:
-            user_data = json.load(f)
-            config.update(user_data)
-    except (json.JSONDecodeError, IOError):
-        pass
-    return config
+CONFIG_PATH = "config.json"
 
-def save_config(filepath: str, config: Dict[str, Any]) -> None:
-    with open(filepath, "w") as f:
+def load_config() -> Dict[str, Any]:
+    if not os.path.exists(CONFIG_PATH):
+        return DEFAULT_CONFIG.copy()
+    
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            user_config = json.load(f)
+            return {**DEFAULT_CONFIG, **user_config}
+    except (json.JSONDecodeError, IOError):
+        return DEFAULT_CONFIG.copy()
+
+def save_config(config: Dict[str, Any]) -> None:
+    with open(CONFIG_PATH, "w") as f:
         json.dump(config, f, indent=4)
+
+config = load_config()
