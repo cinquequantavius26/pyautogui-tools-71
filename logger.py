@@ -1,30 +1,41 @@
 import logging
-from logging.handlers import RotatingFileHandler
-from pathlib import Path
+import sys
+from typing import Optional
 
-LOG_FILE = "autoclicker.log"
-MAX_BYTES = 1024 * 1024
-BACKUP_COUNT = 3
 
-def get_logger(name: str) -> logging.Logger:
+def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
+    """
+    Configures and returns a logger instance for the application.
+
+    Args:
+        name: The name of the logger.
+        level: The logging threshold level.
+
+    Returns:
+        Configured logging.Logger object.
+    """
     logger = logging.getLogger(name)
-    if not logger.handlers:
-        logger.setLevel(logging.INFO)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+    logger.setLevel(level)
 
-        file_handler = RotatingFileHandler(
-            LOG_FILE, 
-            maxBytes=MAX_BYTES, 
-            backup_count=BACKUP_COUNT
-        )
-        file_handler.setFormatter(formatter)
-        
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
-        logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
-        
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
     return logger
+
+
+def get_logger(name: Optional[str] = None) -> logging.Logger:
+    """
+    Retrieves an existing logger or creates a new one.
+
+    Args:
+        name: The name of the logger to retrieve.
+
+    Returns:
+        The logger instance.
+    """
+    return logging.getLogger(name or "pyautogui-tools-71")
