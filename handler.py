@@ -1,38 +1,32 @@
-import pyautogui
-import logging
+import time
 from typing import Tuple, Optional
+import pyautogui
 
-logger = logging.getLogger(__name__)
+class ClickHandler:
+    """Handles PyAutoGUI mouse interactions including clicking and dragging."""
 
-def safe_click(x: int, y: int) -> bool:
-    try:
-        screen_width, screen_height = pyautogui.size()
-        if not (0 <= x < screen_width and 0 <= y < screen_height):
-            logger.error(f"Coordinates ({x}, {y}) out of bounds")
+    def __init__(self, interval: float = 0.1, clicks: int = 1) -> None:
+        self.interval: float = interval
+        self.clicks: int = clicks
+        pyautogui.FAILSAFE = True
+
+    def click_at(self, x: int, y: int, button: str = "left") -> bool:
+        """Executes a mouse click at the specified coordinates."""
+        try:
+            pyautogui.click(x=x, y=y, clicks=self.clicks, interval=self.interval, button=button)
+            return True
+        except pyautogui.FailSafeException:
             return False
-        
-        pyautogui.click(x, y)
-        return True
-    except pyautogui.FailSafeException:
-        logger.critical("Fail-safe triggered by user")
-        return False
-    except Exception as e:
-        logger.error(f"Unexpected automation failure: {e}")
-        return False
 
-def get_valid_position(x: str, y: str) -> Optional[Tuple[int, int]]:
-    try:
-        pos_x, pos_y = int(x), int(y)
-        return (pos_x, pos_y)
-    except (ValueError, TypeError) as e:
-        logger.warning(f"Invalid coordinate input: {e}")
-        return None
+    def get_mouse_position(self) -> Tuple[int, int]:
+        """Retrieves the current coordinates of the mouse cursor."""
+        x, y = pyautogui.position()
+        return int(x), int(y)
 
-def perform_click_sequence(coords: list) -> int:
-    successful_clicks = 0
-    for x, y in coords:
-        if safe_click(x, y):
-            successful_clicks += 1
-        else:
-            break
-    return successful_clicks
+    def drag_to(self, x: int, y: int, duration: float = 0.5) -> bool:
+        """Drags the mouse to target coordinates over specified duration."""
+        try:
+            pyautogui.dragTo(x, y, duration=duration)
+            return True
+        except pyautogui.FailSafeException:
+            return False
