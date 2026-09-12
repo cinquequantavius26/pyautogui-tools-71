@@ -1,41 +1,28 @@
 import logging
 import sys
-from typing import Optional
 
 
-def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
-    """
-    Configures and returns a logger instance for the application.
-
-    Args:
-        name: The name of the logger.
-        level: The logging threshold level.
-
-    Returns:
-        Configured logging.Logger object.
-    """
+def setup_logger(name: str = "autoclicker", log_file: str = "autoclicker.log", level: int = logging.INFO) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(level)
+    if logger.handlers:
+        return logger
 
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        fmt="%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    if log_file:
+        try:
+            file_handler = logging.FileHandler(log_file, encoding="utf-8")
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+        except IOError:
+            logger.warning("Could not create log file: %s", log_file)
 
     return logger
-
-
-def get_logger(name: Optional[str] = None) -> logging.Logger:
-    """
-    Retrieves an existing logger or creates a new one.
-
-    Args:
-        name: The name of the logger to retrieve.
-
-    Returns:
-        The logger instance.
-    """
-    return logging.getLogger(name or "pyautogui-tools-71")
