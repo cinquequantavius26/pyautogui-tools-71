@@ -1,29 +1,33 @@
 import json
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 DEFAULT_CONFIG = {
     "interval": 0.1,
     "button": "left",
-    "failsafe": True,
-    "hotkey": "f6"
+    "clicks": 1,
+    "hotkey": "f6",
+    "failsafe": True
 }
 
-CONFIG_PATH = "config.json"
+class ConfigLoader:
+    def __init__(self, filepath: str = "config.json"):
+        self.filepath = filepath
+        self.data = self._load()
 
-def load_config() -> Dict[str, Any]:
-    if not os.path.exists(CONFIG_PATH):
-        return DEFAULT_CONFIG.copy()
-    
-    try:
-        with open(CONFIG_PATH, "r") as f:
-            user_config = json.load(f)
-            return {**DEFAULT_CONFIG, **user_config}
-    except (json.JSONDecodeError, IOError):
-        return DEFAULT_CONFIG.copy()
+    def _load(self) -> Dict[str, Any]:
+        if not os.path.exists(self.filepath):
+            self._save(DEFAULT_CONFIG)
+            return DEFAULT_CONFIG
+        try:
+            with open(self.filepath, "r") as f:
+                return {**DEFAULT_CONFIG, **json.load(f)}
+        except (json.JSONDecodeError, IOError):
+            return DEFAULT_CONFIG
 
-def save_config(config: Dict[str, Any]) -> None:
-    with open(CONFIG_PATH, "w") as f:
-        json.dump(config, f, indent=4)
+    def _save(self, data: Dict[str, Any]) -> None:
+        with open(self.filepath, "w") as f:
+            json.dump(data, f, indent=4)
 
-config = load_config()
+    def get(self, key: str) -> Any:
+        return self.data.get(key, DEFAULT_CONFIG.get(key))
