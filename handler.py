@@ -1,32 +1,34 @@
-import time
-from typing import Tuple, Optional
 import pyautogui
+import logging
+from typing import Tuple, Optional
 
-class ClickHandler:
-    """Handles PyAutoGUI mouse interactions including clicking and dragging."""
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
-    def __init__(self, interval: float = 0.1, clicks: int = 1) -> None:
-        self.interval: float = interval
-        self.clicks: int = clicks
-        pyautogui.FAILSAFE = True
+def safe_click(x: int, y: int, button: str = 'left') -> bool:
+    try:
+        screen_width, screen_height = pyautogui.size()
+        if not (0 <= x < screen_width and 0 <= y < screen_height):
+            raise ValueError(f"Coordinates ({x}, {y}) out of screen bounds")
+        
+        pyautogui.click(x=x, y=y, button=button)
+        return True
+    except pyautogui.FailSafeException:
+        logger.error("Fail-safe triggered by user")
+        return False
+    except ValueError as e:
+        logger.error(f"Invalid input: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected automation error: {e}")
+        return False
 
-    def click_at(self, x: int, y: int, button: str = "left") -> bool:
-        """Executes a mouse click at the specified coordinates."""
-        try:
-            pyautogui.click(x=x, y=y, clicks=self.clicks, interval=self.interval, button=button)
-            return True
-        except pyautogui.FailSafeException:
-            return False
-
-    def get_mouse_position(self) -> Tuple[int, int]:
-        """Retrieves the current coordinates of the mouse cursor."""
-        x, y = pyautogui.position()
-        return int(x), int(y)
-
-    def drag_to(self, x: int, y: int, duration: float = 0.5) -> bool:
-        """Drags the mouse to target coordinates over specified duration."""
-        try:
-            pyautogui.dragTo(x, y, duration=duration)
-            return True
-        except pyautogui.FailSafeException:
-            return False
+def get_safe_position() -> Optional[Tuple[int, int]]:
+    try:
+        pos = pyautogui.position()
+        return (pos.x, pos.y)
+    except pyautogui.FailSafeException:
+        return None
+    except Exception as e:
+        logger.error(f"Position retrieval failure: {e}")
+        return None
